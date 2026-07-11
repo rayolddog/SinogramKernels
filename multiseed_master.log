@@ -1,0 +1,18 @@
+=== 09:37:54 START seed_base_s1 ===
+=== 10:12:38 DONE seed_base_s1 : best_val_macroAUC=0.8720 ===
+=== 10:12:38 START seed_gfb_s1 ===
+=== 11:39:25 DONE seed_gfb_s1 : best_val_macroAUC=0.8807 ===
+=== 11:39:25 START seed_base_s2 ===
+=== 23:56:41 START seed_base_s1 ===
+=== 23:56:46 DONE seed_base_s1 :  ===
+=== 23:56:46 START seed_gfb_s1 ===
+=== 23:56:49 DONE seed_gfb_s1 :  ===
+=== 23:56:49 START seed_base_s2 ===
+=== 00:16:06 DONE seed_base_s2 : best_val_macroAUC=0.8764 ===
+=== 00:16:06 START seed_gfb_s2 ===
+=== 02:22:10 DONE seed_gfb_s2 : best_val_macroAUC=0.8776 ===
+=== 02:22:10 START seed_base_s3 ===
+=== 02:56:54 DONE seed_base_s3 : best_val_macroAUC=0.8741 ===
+=== 02:56:54 START seed_gfb_s3 ===
+=== 04:23:42 DONE seed_gfb_s3 : best_val_macroAUC=0.8788 ===
+MULTISEED_DONE 04:23:42

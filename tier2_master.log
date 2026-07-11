@@ -1,0 +1,41 @@
+00:49:44 === TIER2 orchestrator start (deadline 07:40) ===
+04:23:45 prereqs met (multiseed+tier1 done, bank built) -> start factorial
+[flip] EXP=abl_base domain=sinogram arch=aniso_cfg whiten=off | 2000 test slices; fracs [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+[flip] frac=0.00  macro=0.8921 SDH=0.8758
+[flip] frac=0.10  macro=0.8885 SDH=0.8754
+[flip] frac=0.20  macro=0.8865 SDH=0.8717
+[flip] frac=0.30  macro=0.8769 SDH=0.8612
+[flip] frac=0.40  macro=0.8647 SDH=0.8447
+[flip] frac=0.50  macro=0.8405 SDH=0.8123
+[flip] retention@0.3 = 0.983  -> abl_base_sinogram_flip.json
+[flip] EXP=flip_noaug domain=sinogram arch=aniso_cfg whiten=off | 2000 test slices; fracs [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+[flip] frac=0.00  macro=0.8858 SDH=0.8822
+[flip] frac=0.10  macro=0.5422 SDH=0.6222
+[flip] frac=0.20  macro=0.4792 SDH=0.4704
+[flip] frac=0.30  macro=0.4791 SDH=0.4696
+[flip] frac=0.40  macro=0.4743 SDH=0.4639
+[flip] frac=0.50  macro=0.4663 SDH=0.4536
+[flip] retention@0.3 = 0.541  -> flip_noaug_sinogram_flip.json
+04:24:07 --- cell rc_none_off (domain=recon_wedge flags='') train ---
+04:59:00     trained rc_none_off : best_val_macroAUC=0.8957
+04:59:00     eval retention (recon_wedge) ...
+05:12:22     retention@0.3 = 0.674
+05:12:22 --- cell rc_wedge_off (domain=recon_wedge flags='--aug-wedge-recon') train ---
+05:47:10     trained rc_wedge_off : best_val_macroAUC=0.8892
+05:47:10     eval retention (recon_wedge) ...
+06:00:33     retention@0.3 = 0.975
+06:00:33 --- cell sn_none_on (domain=sinogram flags='--whiten') train ---
+06:35:51     trained sn_none_on : best_val_macroAUC=0.8821
+06:35:51     eval retention (sinogram) ...
+06:36:02     retention@0.3 = 0.558
+06:36:02 --- cell sn_wedge_on (domain=sinogram flags='--whiten --aug-angular') train ---
+07:11:14     trained sn_wedge_on : best_val_macroAUC=0.8723
+07:11:14     eval retention (sinogram) ...
+07:11:25     retention@0.3 = 0.926
+07:11:25 --- cell rc_none_on (domain=recon_wedge flags='--whiten') train ---
+07:49:41     trained rc_none_on : best_val_macroAUC=0.8791
+07:49:41     eval retention (recon_wedge) ...
+08:03:55     retention@0.3 = 0.901
+08:03:55 DEADLINE reached; skipping remaining cells (stopping at rc_wedge_on)
+08:03:55 === final collation ===
+08:03:55 TIER2_DONE

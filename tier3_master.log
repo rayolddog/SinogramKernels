@@ -1,0 +1,26 @@
+12:08:54 === TIER3 train se_noaug (seresnext50 sino, NO aug, whiten off, 25ep) ===
+13:54:59 trained se_noaug : best_val_macroAUC=0.8877
+13:54:59 === eval retention (sinogram, same test set) ===
+[flip] EXP=se_noaug domain=sinogram arch=seresnext50 whiten=off | 2000 test slices; fracs [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+[flip] frac=0.00  macro=0.9008 SDH=0.8887
+[flip] frac=0.10  macro=0.8386 SDH=0.7847
+[flip] frac=0.20  macro=0.7979 SDH=0.7819
+[flip] frac=0.30  macro=0.7329 SDH=0.7999
+[flip] frac=0.40  macro=0.7604 SDH=0.7636
+[flip] frac=0.50  macro=0.4818 SDH=0.5511
+[flip] retention@0.3 = 0.814  -> se_noaug_sinogram_flip.json
+[flip] EXP=se_200k domain=sinogram arch=seresnext50 whiten=off | 2000 test slices; fracs [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+[flip] frac=0.00  macro=0.9111 SDH=0.8997
+[flip] frac=0.10  macro=0.9079 SDH=0.8840
+[flip] frac=0.20  macro=0.9059 SDH=0.8803
+[flip] frac=0.30  macro=0.8996 SDH=0.8732
+[flip] frac=0.40  macro=0.8950 SDH=0.8658
+[flip] frac=0.50  macro=0.8863 SDH=0.8592
+[flip] retention@0.3 = 0.987  -> se_200k_sinogram_flip.json
+SE-ResNeXt50 (high capacity) sinogram wedge retention@0.3:
+  aug-OFF (se_noaug) = 0.814  (macro@0 0.9008)
+  aug-ON  (se_200k)  = 0.987  (macro@0 0.9111)
+  delta (aug lift)   = +0.174
+Reference (aniso_cfg small model): aug-OFF 0.541 -> aug-ON 0.983 (delta +0.442)
+VERDICT: intermediate; see numbers above.
+13:55:27 TIER3_DONE

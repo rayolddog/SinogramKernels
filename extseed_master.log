@@ -1,0 +1,26 @@
+07:44:04 extseed: NOWAIT -> starting seeds 4,5 concurrently (unified governor handles heat)
+07:44:04 === START seed_base_s4 (--arch aniso_cfg --seed 4) ===
+08:22:01 === DONE seed_base_s4 : best_val_macroAUC=0.8716 ===
+08:22:01 === START seed_gfb_s4 (--arch aniso_cfg --stem tall --fulres --resk 5 --resdil --seed 4) ===
+09:48:43 === DONE seed_gfb_s4 : best_val_macroAUC=0.8803 ===
+09:48:43 === START seed_base_s5 (--arch aniso_cfg --seed 5) ===
+10:23:25 === DONE seed_base_s5 : best_val_macroAUC=0.8776 ===
+10:23:25 === START seed_gfb_s5 (--arch aniso_cfg --stem tall --fulres --resk 5 --resdil --seed 5) ===
+11:50:08 === DONE seed_gfb_s5 : best_val_macroAUC=0.8787 ===
+11:50:08 === pooled analysis over all 6 seeds ===
+11:50:08 EXTSEED_DONE
+seed      base       gfb       gap
+   0    0.8772    0.8814   +0.0042
+   1    0.8720    0.8807   +0.0087
+   2    0.8764    0.8776   +0.0012
+   3    0.8741    0.8788   +0.0047
+   4    0.8716    0.8803   +0.0087
+   5    0.8776    0.8787   +0.0011
+
+--- pooled ---
+ base: n=6 mean=0.8748 sd=0.0026 [0.8716, 0.8776]
+  gfb: n=6 mean=0.8796 sd=0.0014 [0.8776, 0.8814]
+
+paired gap (gfb-base): mean=+0.0048 sd=0.0034 n=6
+paired t=3.445  Cohen's d=1.406
+vs t_crit(df=5,.05)=2.571: SEPARATES from seed noise

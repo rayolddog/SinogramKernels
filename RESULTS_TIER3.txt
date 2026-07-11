@@ -1,0 +1,6 @@
+SE-ResNeXt50 (high capacity) sinogram wedge retention@0.3:
+  aug-OFF (se_noaug) = 0.814  (macro@0 0.9008)
+  aug-ON  (se_200k)  = 0.987  (macro@0 0.9111)
+  delta (aug lift)   = +0.174
+Reference (aniso_cfg small model): aug-OFF 0.541 -> aug-ON 0.983 (delta +0.442)
+VERDICT: intermediate; see numbers above.

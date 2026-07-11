@@ -1,0 +1,7 @@
+High-capacity (seresnext50) aug-OFF wedge retention@0.3:
+  sinogram (se_noaug)        = 0.814
+  recon    (se_recon_noaug)  = 0.570
+  sino - recon               = +0.244
+Small-model (aniso_cfg) aug-OFF ref: sino 0.541, recon 0.674
+  recon full curve: [1.0, 0.694, 0.622, 0.57, 0.572, 0.566]
+VERDICT: sino > recon at high capacity -> a sinogram-SPECIFIC cushion exists at moderate wedges; partial support for a projection-domain edge.

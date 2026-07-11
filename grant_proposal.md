@@ -1,0 +1,154 @@
+# Detecting Intracranial Hemorrhage in the CT Projection Domain: A Sinogram-Native Deep-Learning Approach
+
+**Principal Investigator:** John B. Bramble, MD
+**Proposal type:** Exploratory / Developmental (R21-style, 2-year)
+**Keywords:** intracranial hemorrhage, CT sinogram, fan-beam / helical geometry, projection-domain deep learning, autocorrelation, Gabor wavelets, scanner-specific calibration
+
+---
+
+## Project Summary
+
+Deep neural networks can reconstruct a CT image directly from projection data (Li, Chen et al., *IEEE TMI* 2019); such a network has already learned, inside its encoder, to read diagnostic structure from projections. We propose to extend that capability from **reconstruction** to **diagnosis** — a network that identifies acute intracranial hemorrhage (ICH) from the projection domain, before an image is formed. The scientific motivation is precise: reconstruction is a lossy, regularized, vendor-specific inverse, and by the data-processing inequality it cannot add diagnostic information that the raw projections do not already carry. The mathematical structure the detector must exploit is second-order and oriented — the projection data encode the object's **autocorrelation** angularly (via the Fourier-slice and Wiener–Khinchin theorems), and are naturally analyzed with orientation- and scale-selective **Gabor** atoms, which are also what a convolutional network learns in its first layers. This proposal is deliberately honest about geometry and about what its data can prove: real CT is **fan-beam, acquired helically**, not the parallel-beam Radon idealization; and the public data we use provide reconstructed images only, so our experimental sinograms are *synthetic* re-projections. The RSNA phase therefore rigorously tests **representation and architecture**; the **fidelity and artifact advantages** are properties of true raw data and define the translational phase.
+
+*This document is a starting draft, intended to be rewritten by the investigator who takes up the problem. Its purpose is to fix the history, the mathematics, and the goals rigorously; the prose is secondary.*
+
+---
+
+## 1. Historical Background
+
+The mathematics predates the machine by half a century. **Johann Radon** (1917) proved that a function on the plane is determined by its integrals over all lines, and gave the inversion — the theoretical core of tomography. **Ronald Bracewell** (1956) independently used projection–reconstruction (“strip integration”) to map the radio sky, and articulated the **Fourier-slice relationship**. **Dennis Gabor** (1946) introduced the jointly space/frequency-localized “elementary signals” now called Gabor atoms in his *Theory of Communication*; Gabor also invented **holography** (Nobel Prize, 1971) — a lineage of interest to the PI, whose own early work used FFT-based digital holograms.
+
+The clinical machine followed from **Allan Cormack** (1963–64), who worked out the radiological line-integral inversion, and **Godfrey Hounsfield** (1971–73), who built the first scanner at EMI; the two shared the 1979 Nobel Prize in Physiology or Medicine. The canonical mathematical treatment — parallel- and fan-beam filtered back-projection, algebraic reconstruction — is Kak & Slaney (1988). **Helical (spiral) CT** (Kalender et al., 1990) made the source trace a helix relative to the patient; exact inversion for the helical cone beam came only later (**Katsevich**, 2002). The autocorrelation–power-spectrum identity underlying our feature argument is the **Wiener–Khinchin** theorem (Wiener 1930; Khinchin 1934).
+
+The deep-learning era reopened the inverse problem: **AUTOMAP** (Zhu et al., *Nature* 2018) learned image formation as a manifold transform; **Li, Chen et al.** (*IEEE TMI* 2019) learned the sinogram→image map directly on CT; **Xie, Shan & Wang** (DEAR, 2019) pursued few-view reconstruction. Each learns to make a *better image*. The present proposal reuses the same projection-domain modeling capability for a *different endpoint* — the diagnosis — and never forms the image.
+
+The PI’s own history closes a loop: a feature-attribution computer-aided-diagnosis system (late 1980s, under S. J. Dwyer III, a DICOM architect), and IHS colorization of CT. Those projects treated interpretability as intrinsic and used correlation/texture features directly — the same autocorrelation-and-Gabor thread this proposal formalizes with modern tools.
+
+---
+
+## 2. Mathematical Framework
+
+### 2.1 The real acquisition geometry: fan-beam and helical
+
+A clinical scanner is **not** a parallel-beam Radon device. A point source illuminates a detector arc, so the measured rays are **divergent (fan-beam)**: a projection is g(β, γ), with β the source angle and γ the fan angle of a ray. Fan data relate to parallel data by a rebinning,
+
+@@ θ = β + γ,     s = D sin γ,
+
+with D the source-to-isocenter distance; fan-beam FBP additionally carries a distance weighting. Acquisition is **helical**: the table translates while the gantry rotates, so the source describes a helix relative to the patient,
+
+@@ z(β) = (h / 2π) β     (pitch h per rotation).
+
+Reconstructing an axial plane then requires longitudinal interpolation (single-slice helical), cone-beam methods (FDK), or exact helical inversion (Katsevich 2002), and in practice increasingly **model-based iterative** or **deep-learning** reconstruction (e.g. GE TrueFidelity/DLIR). The operational point: **raw data are divergent-beam, helically sampled, and reconstruction is a regularized, vendor-specific, non-injective-in-practice inverse.** That non-injectivity is exactly where kernel choice, apodization, and iterative priors inject the image-domain variability that projection-domain detection avoids.
+
+### 2.2 The parallel-beam Radon transform (an idealization we use to reason)
+
+The parallel-beam transform is the tractable model that exhibits projection structure. For attenuation field f,
+
+@@ p_θ(s) = ∫ f(s cosθ − t sinθ,  s sinθ + t cosθ) dt.
+
+A point mass at polar position (r₀, φ₀) maps to s = r₀ cos(θ − φ₀) — a sinusoid, hence *sino*gram. The **Fourier-slice theorem** connects it to the image spectrum F:
+
+@@ (1-D FT of p_θ)(ω) = F(ω cosθ,  ω sinθ),
+
+so projections tile the 2-D spectrum radially and f is recoverable with full angular coverage. Inversion is filtered back-projection,
+
+@@ f(x,y) = ∫₀^π (p_θ ∗ H)(x cosθ + y sinθ) dθ,     H(ω) = |ω|,
+
+whose ramp filter |ω| amplifies high-frequency noise — the ill-conditioning that forces the regularization choices of §2.1. **We treat this parallel-beam model as an illustrative, computable stand-in** for the projection structure; it is not the acquisition physics, and our synthetic data inherit its idealization (§2.5).
+
+### 2.3 The sinogram encodes the image autocorrelation
+
+The feature the detector must read is second-order. Define the image autocorrelation
+
+@@ R_f(τ) = ∫ f(x) f(x + τ) dx,     (2-D FT of R_f) = |F|²     (Wiener–Khinchin).
+
+The 1-D autocorrelation of one projection,
+
+@@ r_θ(u) = ∫ p_θ(s) p_θ(s + u) ds,     (1-D FT of r_θ)(ω) = |F(ω cosθ, ω sinθ)|²,
+
+is, by Fourier-slice applied to |·|², a **radial slice of the 2-D power spectrum**. Sweeping θ fills |F|², whose inverse transform is R_f. In words: **the projection autocorrelations, across angle, reconstruct the image autocorrelation** — each projection is an angular sample of the object’s correlation/texture structure. This is the exact sense in which the Radon/sinogram *demonstrates the expected shape of the autocorrelation*. A hemorrhage — a focal, hyperattenuating, texturally distinct region — perturbs R_f in an orientation-dependent way that is present, angularly encoded, in the sinogram.
+
+![**Figure 2.** The autocorrelation identity, computed on a **real RSNA positive-ICH slice** (the raw image and its invertible sinogram are not shown — only non-identifiable, phase-free statistics, per competition data-use terms). **(A)** 2-D autocorrelation R_f (log). **(B)** Power spectrum |F|² with a radial slice at θ₀ = 55° (Fourier-slice). **(C)** The 1-D autocorrelation of each projection, r_θ(u), stacked over angle; the marked column corresponds to the radial slice in B. **(D)** The Radon transform of the 2-D autocorrelation R_f. Panels C and D are equal (Pearson r = 0.995), demonstrating r_θ = Radon[R_f]: the sinogram's second-order structure is the object's autocorrelation, sampled by angle.](schematic_autocorrelation.png){0.82}
+
+### 2.4 Gabor wavelets: the natural feature basis
+
+A Gabor atom is a Gaussian-windowed oriented sinusoid,
+
+@@ ψ(x;  f₀, θ, σ, φ) = exp(−|x|² / 2σ²) · cos(2π f₀ (x · n_θ) + φ),
+
+jointly localized in space and frequency (attaining the uncertainty bound; Gabor 1946) and selective in orientation θ and scale ∝ 1/f₀. Two facts make it the right basis here. First, an oriented image structure maps to a localized (θ, s) signature in the sinogram, so a Gabor bank over the sinogram reads projected orientation and scale directly — Gabor energy is a **localized power spectrum**, complementing the global autocorrelation of §2.3. Second, the first convolutional layers of trained CNNs are empirically Gabor-like; a CNN on the sinogram is, in effect, learning a **data-adaptive Gabor/autocorrelation front end**. The proposed detector therefore formalizes what its early layers would learn regardless — which we exploit both as initialization (fixed Gabor front end) and as an interpretability handle.
+
+### 2.5 Information ordering — and an honest caveat
+
+For a real scan the causal chain is
+
+@@ Y (diagnosis)  →  f (attenuation field)  →  p_raw (fan-beam helical data)  →  x (reconstructed image),
+
+with x computed from p_raw alone, so (Y, p_raw, x) form a Markov chain. The **data-processing inequality** gives
+
+@@ I(Y; x) ≤ I(Y; p_raw).
+
+Reconstruction cannot increase the diagnostic information the data carry; equality requires reconstruction to be a *sufficient statistic* for Y, which finite kernels, discretization, 12-bit quantization, apodization, and display windowing all break. **This is the rigorous form of the fidelity claim.**
+
+But the public RSNA data provide x only. Our experimental sinograms are **synthesized by forward projection**, p_syn = R[x], so the chain is Y → x → p_syn and
+
+@@ I(Y; p_syn) ≤ I(Y; x) ≤ I(Y; p_raw).
+
+The synthetic sinogram is a re-encoding of the already-reconstructed image — it cannot exceed it — and it is parallel-beam, not fan-beam helical. **Consequently the RSNA phase can rigorously establish representation and architecture claims (can a network detect ICH from a projection-domain encoding? how efficiently?) and simulate geometry/dose robustness, but it cannot by itself demonstrate the raw-domain fidelity or artifact advantages.** Those require true p_raw and are the object of the translational phase. Keeping these two regimes separate is the central rigor of the program.
+
+![**Figure 1.** The image↔projection loop and the motion argument. **(A)** An ideal image f (Shepp–Logan head phantom with a focal hyperdensity, red circle). **(B)** Its sinogram R[f]; the lesion is a clean, connected sinusoid (red track). **(C)** A sudden mid-scan patient motion, modeled as a step offset of the sinogram past the jump angle (yellow line) — the lesion trace offsets abruptly but each segment remains a coherent sinusoid. **(D)** Inverse Radon of the motion-corrupted sinogram, shown in a wide, low-centered lung window: the step discontinuity back-projects into sharp radiating streaks that bury the lesion. The abnormality's signature is better preserved in projection space (B, C) than in the reconstructed image (D), which motivates detection before reconstruction. All panels are real Radon/inverse-Radon transforms; the lesion track is the argmax ridge of the lesion-only sinogram under the same step offset.](schematic_sinogram_motion.png){0.75}
+
+---
+
+## 3. Hypotheses and Goals (falsifiable)
+
+- **H1 — Representation.** A CNN reading synthetic sinograms detects ICH at AUC within a pre-specified margin δ of a matched image-domain model on identical splits. *Falsified* if projection-domain AUC is materially and significantly lower (paired DeLong test).
+- **H2 — Bound.** On synthetic data, projection-domain AUC ≤ image-domain AUC, per the Bayes bound of §2.5; the measured shortfall quantifies representation efficiency. *Falsified / flagged* if projection-domain significantly **exceeds** image-domain — which would indicate label leakage or a reprojection artifact to be investigated, not a physical gain.
+- **H3 — Raw-domain advantage (translational).** With true fan-beam raw sinograms from a fixed scanner, projection-domain detection avoids reconstruction artifacts, retains higher bit depth and detector sampling, and is at least as accurate as, and more stable within-scanner than, image-domain detection. *Testable only with vendor raw data* (§6).
+
+**Aim 1 (months 1–4).** Build the paired image/synthetic-sinogram dataset at full scale; document the synthetic, parallel-beam status explicitly; release a fixed stratified split.
+**Aim 2 (months 3–14).** Train matched projection- and image-domain classifiers under identical protocols; test H1/H2; ablate a fixed-Gabor versus learned front end and an explicit autocorrelation feature.
+**Aim 3 (months 10–24).** Simulate fan-beam and reduced-dose / sparse-view degradation to probe robustness; develop back-projected saliency maps; specify the raw-data acquisition protocol required to test H3.
+
+---
+
+## 4. Significance — the four advantages (properties of RAW data)
+
+Each advantage is a property of true raw projections (the motivation); the RSNA phase can only partially probe them by simulation.
+
+1. **Reconstruction artifacts avoided.** Beam-hardening, streak, cone-beam and iterative-reconstruction textures are introduced *by* reconstruction; a sinogram reader never sees them. *(Raw-data claim; approachable by simulation.)*
+2. **Higher intrinsic fidelity.** Raw projections carry greater bit depth and finer detector sampling than the windowed, resampled image retains — formalized by the data-processing inequality of §2.5. *(Raw-data claim; not demonstrable on synthetic sinograms.)*
+3. **Freedom from cross-algorithm inaccuracy.** An image-domain model inherits kernel/slice/vendor dependence — a leading cause of generalization failure across reconstructions. A projection-domain detector is instead **calibrated to one specific scanner’s raw output**; the reconstruction-algorithm variable is removed, not averaged over. *(Testable by simulated-geometry robustness now; confirmable on raw data.)*
+4. **Speed of notification.** Detection precedes or runs concurrently with reconstruction, enabling the earliest physically possible flag for a finding in which minutes change neurological outcome. *(Latency measurable now; end-to-end only on-scanner.)*
+
+---
+
+## 5. Preliminary Data
+
+A working pipeline exists and has produced a first analyzable cohort. **Source:** RSNA 2019 Intracranial Hemorrhage Detection (>870,000 expertly labeled head-CT slices; six labels per slice — epidural, intraparenchymal, intraventricular, subarachnoid, subdural, *any*), the PI a registered participant. **Encoding:** each slice on a calibrated **linear-Hounsfield** scale (value = HU + 1024, preserving the physical attenuation relationship rather than a display window), forked into a reconstructed branch (256×256, 12-bit) and a **synthetic parallel-beam** 256-angle sinogram (256×256, float32) — both from one shared source, the controlled comparison H1/H2 require. **First cohort:** a **stratified 50,000-slice subset**, built with **zero processing failures**, preserving the full-dataset hemorrhage prevalence exactly (14.5% positive) and all 32 observed label-combinations proportionally; QC pairs confirm anatomically correct images and physically correct sinograms. **Compute:** local RTX 4090 / NVMe; full-cohort scaling validated. Per §2.5 these sinograms are synthetic and cannot show the raw-domain advantages — they establish feasibility for H1/H2 only.
+
+---
+
+## 6. Translation Path and Vendor Access
+
+Raw projection data are proprietary and are not exposed at the DICOM/PACS layer, so testing H3 and any scanner-integrated deployment requires manufacturer cooperation — a defining feature of the problem, not an incidental obstacle. GE HealthCare, headquartered in Waukesha, Wisconsin (minutes from UW-Madison), has a documented four-decade relationship with the university, recently formalized as a multi-year strategic collaboration explicitly encompassing its deep-learning reconstruction technology (TrueFidelity/DLIR); the projection-domain reconstruction work this proposal extends (Chen et al., 2019) was itself performed on GE hardware with GE support. That existing channel is the natural route to (i) raw fan-beam data on a defined platform and (ii) eventual on-scanner integration. Because the RSNA phase (Aims 1–2) runs entirely on public data and simulated projections, the program does **not** depend on vendor access to reach its first-phase aims; a positive H1/H2 result is precisely the evidence that would justify the manufacturer engagement needed for H3.
+
+---
+
+## References
+
+*Classical citations below are standard references given from the canonical literature; page-level details should be verified against the originals. Deep-learning citations were confirmed against publisher/PubMed records.*
+
+1. Radon J. "Über die Bestimmung von Funktionen durch ihre Integralwerte längs gewisser Mannigfaltigkeiten." *Ber. Sächs. Akad. Wiss. Leipzig, Math.-Phys. Kl.* 1917;69:262–277.
+2. Bracewell RN. "Strip integration in radio astronomy." *Aust. J. Phys.* 1956;9:198–217.
+3. Gabor D. "Theory of communication." *J. Inst. Electr. Eng.* 1946;93(26):429–457.
+4. Cormack AM. "Representation of a function by its line integrals, with some radiological applications." *J. Appl. Phys.* 1963;34:2722–2727.
+5. Hounsfield GN. "Computerized transverse axial scanning (tomography): Part 1. Description of system." *Br. J. Radiol.* 1973;46:1016–1022.
+6. Kak AC, Slaney M. *Principles of Computerized Tomographic Imaging.* IEEE Press, 1988.
+7. Kalender WA, Seissler W, Klotz E, Vock P. "Spiral volumetric CT with single-breath-hold technique, continuous transport, and continuous scanner rotation." *Radiology* 1990;176(1):181–183.
+8. Katsevich A. "Theoretically exact filtered backprojection-type inversion algorithm for spiral CT." *SIAM J. Appl. Math.* 2002;62(6):2012–2026.
+9. Zhu B, Liu JZ, Cauley SF, Rosen BR, Rosen MS. "Image reconstruction by domain-transform manifold learning (AUTOMAP)." *Nature* 2018;555:487–492. doi:10.1038/nature25988
+10. Li Y, Li K, Zhang C, Montoya J, Chen G-H. "Learning to Reconstruct CT Images Directly from Sinogram Data under a Variety of Data Acquisition Conditions." *IEEE Trans. Med. Imaging* 2019;38(10):2469–2481. doi:10.1109/TMI.2019.2910760
+11. Zhang C, Li Y, Chen G-H. "Accurate and robust sparse-view angle CT image reconstruction using deep learning and prior image constrained compressed sensing (DL-PICCS)." *Med. Phys.* 2021;48(10):5765–5781. doi:10.1002/mp.15183
+12. Xie H, Shan H, Wang G. "Deep Encoder-Decoder Adversarial Reconstruction (DEAR) Network for 3D CT from Few-View Data." *Bioengineering* 2019;6(4):111. doi:10.3390/bioengineering6040111
+13. Flanders AE, Prevedello LM, Shih G, et al. "Construction of a Machine Learning Dataset through Collaboration: The RSNA 2019 Brain CT Hemorrhage Challenge." *Radiol. Artif. Intell.* 2020;2(3):e190211. doi:10.1148/ryai.2020190211

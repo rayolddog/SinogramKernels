@@ -1,0 +1,19 @@
+14:02:36 === TIER3b train se_recon_noaug (seresnext50 recon_wedge, NO aug, whiten off, 25ep) ===
+15:48:54 trained se_recon_noaug : best_val_macroAUC=0.9376
+15:48:54 === eval retention (recon_wedge, same test set) ===
+[flip] EXP=se_recon_noaug domain=recon_wedge arch=seresnext50 whiten=off | 2000 test slices; fracs [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+[flip] frac=0.00  macro=0.9346 SDH=0.9284
+[flip] frac=0.10  macro=0.6485 SDH=0.7374
+[flip] frac=0.20  macro=0.5812 SDH=0.6797
+[flip] frac=0.30  macro=0.5325 SDH=0.6193
+[flip] frac=0.40  macro=0.5343 SDH=0.6264
+[flip] frac=0.50  macro=0.5291 SDH=0.5934
+[flip] retention@0.3 = 0.570  -> se_recon_noaug_recon_wedge_flip.json
+High-capacity (seresnext50) aug-OFF wedge retention@0.3:
+  sinogram (se_noaug)        = 0.814
+  recon    (se_recon_noaug)  = 0.570
+  sino - recon               = +0.244
+Small-model (aniso_cfg) aug-OFF ref: sino 0.541, recon 0.674
+  recon full curve: [1.0, 0.694, 0.622, 0.57, 0.572, 0.566]
+VERDICT: sino > recon at high capacity -> a sinogram-SPECIFIC cushion exists at moderate wedges; partial support for a projection-domain edge.
+16:02:39 TIER3B_DONE

@@ -1,0 +1,8 @@
+[robust] 2000 test slices; fracs [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+[robust] frac=0.00  macro sino=0.8632 recon=0.8258 | SDH sino=0.8474 recon=0.8195
+[robust] frac=0.10  macro sino=0.5200 recon=0.8112 | SDH sino=0.4864 recon=0.8065
+[robust] frac=0.20  macro sino=0.5205 recon=0.7978 | SDH sino=0.4769 recon=0.7939
+[robust] frac=0.30  macro sino=0.5366 recon=0.7879 | SDH sino=0.4690 recon=0.7771
+[robust] frac=0.40  macro sino=0.4601 recon=0.7894 | SDH sino=0.4851 recon=0.7683
+[robust] frac=0.50  macro sino=0.5000 recon=0.7854 | SDH sino=0.5000 recon=0.7649
+[robust] done -> angular_robustness.png / .json

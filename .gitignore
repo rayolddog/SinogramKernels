@@ -1,0 +1,35 @@
+# --- model checkpoints & large arrays (kept out of git; regenerable) ---
+*.pt
+*.npy
+*.tmp
+*.tmp.npy
+
+# --- python / tooling junk ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.idea/
+.claude/
+.DS_Store
+._*
+
+# --- per-run output directories (checkpoints + per-run stdout/train logs) ---
+abl_*/
+aniso*/
+flip_noaug/
+k200_*/
+kernel_exp*/
+rc_*/
+se_200k/
+se_noaug/
+se_recon_noaug/
+seed_*/
+sn_*/
+
+# --- session-operational markers/logs (not research artifacts) ---
+STOP_ALARM
+*_boot.log
+wake_alarm.log
+thermal_governor.log
+thermal_shutdown.log
+gpu_temp_log.csv

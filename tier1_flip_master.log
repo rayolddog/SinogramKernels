@@ -1,0 +1,20 @@
+=== 00:20:17 TIER1 train flip_noaug ===
+=== 01:41:29 DONE train : best_val_macroAUC=0.8764 ===
+=== 01:41:29 TIER1 eval retention ===
+[flip] EXP=abl_base domain=sinogram arch=aniso_cfg whiten=off | 2000 test slices; fracs [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+[flip] frac=0.00  macro=0.8921 SDH=0.8758
+[flip] frac=0.10  macro=0.8885 SDH=0.8754
+[flip] frac=0.20  macro=0.8865 SDH=0.8717
+[flip] frac=0.30  macro=0.8769 SDH=0.8612
+[flip] frac=0.40  macro=0.8647 SDH=0.8447
+[flip] frac=0.50  macro=0.8405 SDH=0.8123
+[flip] retention@0.3 = 0.983  -> abl_base_sinogram_flip.json
+[flip] EXP=flip_noaug domain=sinogram arch=aniso_cfg whiten=off | 2000 test slices; fracs [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+[flip] frac=0.00  macro=0.8858 SDH=0.8822
+[flip] frac=0.10  macro=0.5422 SDH=0.6222
+[flip] frac=0.20  macro=0.4792 SDH=0.4704
+[flip] frac=0.30  macro=0.4791 SDH=0.4696
+[flip] frac=0.40  macro=0.4743 SDH=0.4639
+[flip] frac=0.50  macro=0.4663 SDH=0.4536
+[flip] retention@0.3 = 0.541  -> flip_noaug_sinogram_flip.json
+TIER1_DONE 01:42:01

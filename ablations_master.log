@@ -1,0 +1,15 @@
+=== 23:15:06 START abl_base (--arch aniso_cfg) ===
+=== 23:49:58 DONE  abl_base : best_val_macroAUC=0.8772 ===
+=== 23:49:58 START abl_tall (--arch aniso_cfg --stem tall) ===
+=== 00:43:24 DONE  abl_tall : best_val_macroAUC=0.8700 ===
+=== 00:43:24 START abl_fulres (--arch aniso_cfg --fulres) ===
+=== 01:34:36 DONE  abl_fulres : best_val_macroAUC=0.8712 ===
+=== 01:34:36 START abl_dil (--arch aniso_cfg --resdil) ===
+=== 02:09:17 DONE  abl_dil : best_val_macroAUC=0.8779 ===
+=== 02:09:17 START abl_5x5 (--arch aniso_cfg --resk 5) ===
+=== 02:48:47 DONE  abl_5x5 : best_val_macroAUC=0.8741 ===
+=== 02:48:47 START abl_all (--arch aniso_cfg --stem tall --fulres --resk 5 --resdil) ===
+=== 04:15:31 DONE  abl_all : best_val_macroAUC=0.8814 ===
+=== 04:15:31 START abl_iso (--arch iso) ===
+=== 04:48:15 DONE  abl_iso : best_val_macroAUC=0.8761 ===
+ALL_ABLATIONS_DONE 04:48:15
