@@ -3,7 +3,7 @@
 *Submitted to the University of Arizona–Banner Health **Big Idea Challenge: Joint Translational Research Accelerator** (pilot award up to $250,000; 2-year).*
 
 **Principal Investigator (academic lead) — sought:** a University of Arizona tenure / tenure-track faculty member (Medical Imaging / Medical Physics / imaging AI), to hold the PI role, budget, and lead authorship (§7).
-**Originating / clinical co-investigator:** John Bramble, MD — Banner Medical Group (Radiology); contributes the concept and preliminary data, participating remotely.
+**Originating / clinical co-investigator:** John Bramble, MD — Banner Medical Group (Radiology); John.Bramble@bannerhealth.com; contributes the concept and preliminary data, participating remotely.
 **Priority areas addressed:** Artificial Intelligence in Health; Neurovascular Diseases and Treatments.
 **Keywords:** intracranial hemorrhage; CT sinogram; fan-beam / helical geometry; DICOM-CT-PD raw projections; projection-domain deep learning; autocorrelation; Gabor wavelets; scanner-specific calibration.
 
