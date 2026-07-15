@@ -35,6 +35,16 @@ handles it); recipe matches arm0 (bs 128 MANDATORY for comparability, lr 3e-4,
 wd 1e-4, 30 epochs) plus 2-epoch LR warmup and grad-clip 1.0 (identical across
 arms). Frozen stem = requires_grad False AND stem.eval() (BN stats frozen).
 
+**Analysis command (verified working 2026-07-14):** per-epoch val macro-AUC is
+in each arm's history.json; plot convergence with the BASE conda python
+(ich_train lacks matplotlib):
+`~/miniconda3/bin/python ~/SinogramKernels/plot_convergence.py
+--run arm0=~/sino_work/arm0_resnet_sino/sinogram
+--run arm1_frozen=~/sino_work/stem_transfer/arm1_s0
+--run arm2_finetune=~/sino_work/stem_transfer/arm2_s0
+--run arm3_control=~/sino_work/stem_transfer/arm3_s0 --out convergence.png`
+It also prints/saves epochs-to-90/95/99%-of-own-best (the rate question).
+
 **Encouraging smoke signal (not a result):** arm 1 with only 2,560 train slices
 reached val macro-AUC 0.8322 in ONE epoch (arm0 needed ~3 epochs on 33k slices
 to pass that). Analysis when real runs finish: compare val-AUC-vs-epoch curves
