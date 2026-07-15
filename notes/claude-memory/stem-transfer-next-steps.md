@@ -13,16 +13,19 @@ pretrained sinogram stem transfers to a transformer. Spec:
 `~/SinogramKernels/train_stem_transfer.py` (smoke-tested end-to-end and
 committed 2026-07-14, commit e3d5c98).
 
-**Training is deferred to the evening of 2026-07-15** (user's decision — daytime
-room temps too high; unit needs cool ambient, see [[dgx-spark-thermal-freezes]]).
+**Training plan (user's, set late 2026-07-14):** start in the EARLY AM of
+2026-07-15 (possibly ~1 am if awake) while the apartment is cool; ambient is
+expected to stay cool enough until ~9:30 am. The in-script temp checks are the
+backstop — they stop a run cleanly if it gets too hot (see
+[[dgx-spark-thermal-freezes]]).
 
-**Run order and commands (each ~2.5 h: ~3 min/epoch + 2 min cooldown x 30 epochs):**
-1. `bash ~/sino_work/run_arm1.sh` — pretrained stem FROZEN (user asked for this
-   one to be set up first)
-2. `bash ~/sino_work/run_arm3.sh` — random-stem control (the critical comparison)
-3. `bash ~/sino_work/run_arm2.sh` — pretrained stem, fine-tuned after epoch 3
-
-All idempotent (--resume). Outputs land in `~/sino_work/stem_transfer/arm{N}_s0/`
+**One command chains everything:** `bash ~/sino_work/run_arms_chain.sh`
+(~7.5-8 h total; each arm ~2.6 h = 30 x (~3 min epoch + 2 min cooldown)).
+Order arm1 -> arm3 -> arm2, deliberate: the critical comparison is
+arm1-vs-arm3, so if heat ends the session early the decisive arms finish
+first. A thermal termination stops the whole chain (don't start the next arm
+hot). Rerun the same command when cool to resume; completed arms skip.
+Individual scripts: run_arm{1,2,3}.sh. All idempotent (--resume). Outputs land in `~/sino_work/stem_transfer/arm{N}_s0/`
 (train.log, history.json, last.pt, best.pt). `tf_init_s0.pt` in that dir pins the
 transformer-side init shared by all arms — do NOT delete it between arms.
 
