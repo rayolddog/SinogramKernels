@@ -86,10 +86,10 @@ def train_domain(domain, ids_tr, ids_va, labels, args, dev, log):
         log(f"[{domain}] recon-wedge augmentation ON (p=0.5, iradon bank)")
     dl_tr = DataLoader(tc.DomainDS(domain, ids_tr, labels, mean, std, augment=aug),
                        batch_size=args.bs, shuffle=True, num_workers=8,
-                       pin_memory=True, drop_last=True, persistent_workers=True)
+                       drop_last=True, persistent_workers=True)
     dl_va = DataLoader(tc.DomainDS(domain, ids_va, labels, mean, std),
                        batch_size=args.bs, shuffle=False, num_workers=8,
-                       pin_memory=True, persistent_workers=True)
+                       persistent_workers=True)
 
     torch.manual_seed(args.seed)              # varied for multi-seed noise-floor test
     np.random.seed(args.seed)
@@ -152,6 +152,20 @@ def train_domain(domain, ids_tr, ids_va, labels, args, dev, log):
             st["conv1_bias"] = model.conv1.bias.detach().cpu().numpy()
         torch.save(st, path)
 
+    # Per-epoch history. The transfer signal in the stem experiment is the SHAPE of
+    # the curve (how fast each arm reaches its own best AUC), not the final number —
+    # a transfer that saves most of the data can vanish at convergence. train.log
+    # alone is not machine-readable, so record it.
+    histpath = os.path.join(outdir, "history.json")
+    hist = []
+    if args.resume and os.path.exists(histpath):
+        try:
+            with open(histpath) as f:
+                hist = json.load(f)
+            hist = [h for h in hist if h["epoch"] <= start_ep]
+        except Exception:
+            hist = []
+
     for ep in range(start_ep, args.epochs):
         model.train()
         t0 = time.time()
@@ -173,6 +187,10 @@ def train_domain(domain, ids_tr, ids_va, labels, args, dev, log):
         newbest = (not np.isnan(auc)) and auc > best
         if newbest:
             best = auc
+        hist.append({"epoch": ep + 1, "loss": run / (bi + 1), "val_macro_auc": auc,
+                     "best_so_far": best, "secs": time.time() - t0})
+        with open(histpath, "w") as f:
+            json.dump(hist, f, indent=1)
         save(lastp, ep + 1, auc)              # resume point after this epoch
         if newbest:
             save(os.path.join(outdir, "best.pt"), ep + 1, auc)
@@ -208,6 +226,10 @@ def main():
     ap.add_argument("--resk", type=int, default=3)          # body kernel size
     ap.add_argument("--resdil", action="store_true")        # body dilations 1,2,4
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--split-file", default=None,
+                    help="split.json {'train':[ids],'val':[ids]} from "
+                         "make_subset_decorrelated.py; patient-disjoint. Strongly "
+                         "preferred over the default slice-hash split.")
     args = ap.parse_args()
 
     os.makedirs(args.out, exist_ok=True)
@@ -223,7 +245,24 @@ def main():
     torch.backends.cudnn.benchmark = True     # fixed 256x256 input -> autotune
     labels = tc.load_labels()
     ids = sorted(labels)
-    ids_tr, ids_va = tc.split_ids(ids)
+    if args.split_file:
+        # Patient-disjoint split from make_subset_decorrelated.py. tc.split_ids()
+        # below hashes the SLICE id, which puts the same patient's near-duplicate
+        # slices on both sides — inflating val AUC with memorization. That is fatal
+        # to any performance claim (stem transferability is exactly that), so a
+        # prebuilt split always wins when supplied.
+        import json
+        with open(args.split_file) as f:
+            sp = json.load(f)
+        have = set(labels)
+        ids_tr = sorted(set(sp["train"]) & have)
+        ids_va = sorted(set(sp["val"]) & have)
+        log(f"[setup] patient-disjoint split from {args.split_file}: "
+            f"train={len(ids_tr)} val={len(ids_va)}")
+    else:
+        ids_tr, ids_va = tc.split_ids(ids)
+        log("[setup] WARNING: slice-level split (md5 of slice id) — same-patient "
+            "leakage across train/val. Pass --split-file for a patient-level split.")
     if args.max_train and len(ids_tr) > args.max_train:
         rng = np.random.default_rng(0)
         idx = rng.choice(len(ids_tr), args.max_train, replace=False)

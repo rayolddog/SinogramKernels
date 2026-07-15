@@ -33,3 +33,7 @@ wake_alarm.log
 thermal_governor.log
 thermal_shutdown.log
 gpu_temp_log.csv
+
+# --- zig build artifacts ---
+zig/radon
+zig/*.o
