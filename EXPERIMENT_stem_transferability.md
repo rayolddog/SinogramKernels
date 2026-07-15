@@ -1,6 +1,19 @@
 # Experiment: Transferability of the sinogram stem — ResNet → Transformer
 
-**Status:** planned. **Machine:** DGX Spark. **Authors:** J. Bramble, MD + Claude (Anthropic Fable 5).
+**Status:** code ready (2026-07-14) — `train_stem_transfer.py`, launch via
+`~/sino_work/run_arm{1,2,3}.sh`; smoke-tested, training deferred to 2026-07-15 evening.
+**Machine:** DGX Spark. **Authors:** J. Bramble, MD + Claude (Anthropic Fable 5).
+
+> **Implemented graft (differs from the generic token diagram below):** the
+> transformer is timm **MaxViT-tiny** (reusing the ich-maxvit choice). The arm0
+> stem (ANISO2, widths 48→256) deploys at the existing `--fulres` strides
+> (2,2,2,1) → 34×34×256, center-cropped to **32×32** — exactly MaxViT stage-2's
+> input grid at img_size 256 — then a learnable 1×1 conv (256→128, same fixed
+> init in all arms) feeds **stages 2–3 + head** (7 of 11 blocks). MaxViT's
+> relative-position attention replaces the explicit positional encoding.
+> Transformer side is initialized once per `--tf-seed` (`tf_init_s0.pt`) and
+> bit-identical across arms; verified by hash in the smoke test. Source stem:
+> arm0 best.pt, val macro-AUC 0.8714 (epoch 22/30, 2026-07-14).
 
 ## Question
 
