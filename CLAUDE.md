@@ -69,6 +69,8 @@ relevant here: `sinogram-patient-leakage` in the NewICH memory dir.
 
 - Repo (code + experiment docs + EXPERIMENTS.md log): `~/SinogramKernels/`.
   EQUATIONS.md = math notation; grant context in Banner_*.md.
+  FUTURE_DIRECTIONS.md = idea parking lot (allowed to be wrong); park the
+  user's speculation there, graduate matured ideas to EXPERIMENT_*.md docs.
 - Run scripts + outputs: `~/sino_work/` (run_arm{0..3}.sh, run_arms_chain.sh;
   outputs `stem_transfer/arm{N}_s0/`: train.log, history.json, best/last.pt).
 - Convergence analysis: `~/miniconda3/bin/python plot_convergence.py --run
