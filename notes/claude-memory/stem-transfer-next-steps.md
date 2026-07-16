@@ -1,6 +1,6 @@
 ---
 name: stem-transfer-next-steps
-description: "Stem-transferability experiment (arm0 CNN stem -> MaxViT): code ready and smoke-tested 2026-07-14; training deferred to 2026-07-15 evening. Launch commands and run order inside."
+description: "Stem-transferability experiment COMPLETE 2026-07-15: all arms 30/30. Headline (convergence rate): pretrained stem hits 0.855+ AUC in 1 epoch vs control's 4-6, 5x lower variance; unfreezing adds nothing. Best AUCs 0.8618/0.8599/0.8631. VRAM 8.9/12.0 GB @ bs128. Results and design inside."
 metadata: 
   node_type: memory
   type: project
@@ -13,6 +13,24 @@ training cheap on lesser hardware (e.g. the user's RTX 4090): if a pretrained
 stem lets a candidate input architecture be judged in ~3-5 epochs instead of 30,
 input-architecture ideas can be screened rapidly. Do not frame results around
 peak AUC.
+
+**COMPLETE 2026-07-15 23:25 — final results (all arms 30/30, seed 0):**
+arm1 (frozen pretrained) best 0.8618 @ep12; arm2 (unfrozen @ep4) 0.8599 @ep12;
+arm3 (random control) 0.8631 @ep19. **Convergence (the headline): pretrained
+arms open at 0.8561 in epoch 1 — the control needs 4-6 epochs to get there —
+with std 0.004 vs 0.020.** Unfreezing = no effect vs frozen (differences
+within noise): frozen-stem screening (and hence the feature cache) is the
+right mode. Val peak comes EARLIER with pretrained stem (ep12 vs ep19):
+divergence onset tracks proximity to the ~0.86 data-limited ceiling, not stem
+type. arm2 ep15-30 carry train_macro_auc/val_loss (added 2026-07-15): gap
+0.078→0.185 monotone, val loss 1.34→2.64 while val AUC drifts 0.852→0.813.
+VRAM @bs128: 8.91 GB alloc / 11.99 GB reserved (arm2); arm1 frozen 7.80 GB.
+Artifacts: ~/sino_work/stem_transfer/{arm*_s0, convergence.png,
+convergence_summary.json}. Open follow-ups: multi-seed + data-size sweep
+(designed below), instrumented re-runs of arms 1/3 for cross-arm gap timing,
+then [[beyond-memorization-goal]].
+
+Original design notes follow (kept for the sweep follow-ups).
 
 Next phase after arm0 completed (see [[arm0-training-recovery]]): test whether the
 pretrained sinogram stem transfers to a transformer. Spec:

@@ -24,20 +24,31 @@ The user occasionally shifts gears mid-session to other projects (other folders,
 e.g. ~/NewICH); some context lives in those folders' own memory dirs —
 relevant here: `sinogram-patient-leakage` in the NewICH memory dir.
 
-## Current state (update this section when it changes; dated 2026-07-15)
+## Current state (update this section when it changes; dated 2026-07-15 23:30)
 
-- arm0 (ResNet on sinograms): complete, best val macro-AUC 0.8714 @ ep22.
-- Stem-transfer study (EXPERIMENT_stem_transferability.md): arm1 30/30 (best
-  0.8618 @ ep12), arm3 30/30 (0.8631 @ ep19), **arm2 at 14/30 (0.8599 @ ep12) —
-  resumable**: `bash ~/sino_work/run_arms_chain.sh` (idempotent, skips complete
-  arms). Convergence verdict so far: pretrained stem = epoch-1 AUC 0.856 vs
-  random 0.830, and 5x lower variance — the rate/stability win is the result.
+- **Stem-transfer study COMPLETE** — all arms 30/30 (arm2 finished 23:25).
+  Best val macro-AUC: arm1 0.8618 @12, arm2 0.8599 @12, arm3 0.8631 @19
+  (arm0 source: 0.8714 @22). Convergence verdict (the headline): pretrained
+  stem reaches 0.855+ in ONE epoch vs the control's 4-6, with 5x lower
+  variance; unfreezing (arm2) adds nothing over frozen (arm1). Val peak
+  comes EARLIER with the pretrained stem (ep~12 vs ep19) — divergence onset
+  tracks proximity to the ~0.86 data-limited ceiling, not stem type. arm2
+  epochs 15-30 have train_macro_auc/val_loss logged: gap grows 0.078 ->
+  0.185 monotonically while val loss doubles. Plot + summary:
+  `~/sino_work/stem_transfer/convergence.{png,json}`.
+- **VRAM record (bs 128, full pipeline):** 8.91 GB peak allocated /
+  11.99 GB peak reserved (arm2, unfrozen); frozen-stem arm1 was 7.80 GB
+  allocated. Fits an RTX 4090 with ~half free; cached-features path needs
+  less.
 - Cached-features platform shipped (cache_stem_features.py,
   train_cached_features.py); validation = cached_s0 should overlay arm1_s0.
-- Next experiment drafted, not started: EXPERIMENT_beyond_memorization.md.
-- Machine issue OPEN: 3 hard crashes 2026-07-15, two at GPU-load onset with cool
-  temps — power-transient suspect; user should swap power cable/outlet before
-  long chains. `startup-mem-watch.service` logs the first 5 min of every boot.
+- Next: EXPERIMENT_beyond_memorization.md (drafted, not started; tier-0
+  schedule controls first). Instrumented re-runs of arms 1/3 (train-AUC
+  logging) queued for the cross-arm gap-timing comparison.
+- Machine issue OPEN: 3 hard crashes 2026-07-15 (2 at GPU-load onset, cool
+  temps) — power-transient suspect; swap power cable/outlet before long
+  chains. The full 16-epoch arm2 resume then ran crash-free 21:52-23:27.
+  `startup-mem-watch.service` logs the first 5 min of every boot.
 
 ## Non-negotiable methodology (do not re-litigate; details in memory files)
 
