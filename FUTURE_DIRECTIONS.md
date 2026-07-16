@@ -26,6 +26,17 @@ they evaporate.
   This subsumes the grant's queued "fixed-Gabor vs learned front-end"
   ablation (Aims 2-3). Judge by convergence rate + stability, per the
   program's headline metric.
+  Design refinement (2026-07-15, from JBB's first-layer-redundancy
+  observation): **fix the spatial filters, learn only the 1x1 channel
+  mixing** behind them (the graft's existing 256->128 adapter). Learned
+  first-layer redundancy is partly functional — stride aliasing breeds
+  phase-shifted duplicates and quadrature pairs (Zhang 2019; scattering /
+  Harmonic Networks lineage) — so critically-sampled orthonormal bases may
+  need anti-aliasing or modulus pooling to compete. The DWT is a strided
+  conv cascade (CDF 9/7 = fixed conv layers; subbands-as-channels at the
+  stem's pyramid scales), so hierarchical wavelets DO fit the platform.
+  Prediction to test: anisotropic Gabor >= learned stem > CDF 9/7 > DCT on
+  sinograms (isotropy mismatch), possibly reversed on recon images.
 - **Beyond-memorization levers** — designed, see
   `EXPERIMENT_beyond_memorization.md` (tiered: schedule controls →
   wd/label-smoothing/feature-mixup/aug/data-dose screens → multi-seed).
