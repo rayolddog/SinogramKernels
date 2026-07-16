@@ -7,6 +7,13 @@ metadata:
   originSessionId: 482f2046-d70e-4842-83ab-a178524c22cf
 ---
 
+**Why this experiment exists (user, 2026-07-15): the headline metric is RATE OF
+CONVERGENCE, not best AUC.** This tests a strategy for making transformer
+training cheap on lesser hardware (e.g. the user's RTX 4090): if a pretrained
+stem lets a candidate input architecture be judged in ~3-5 epochs instead of 30,
+input-architecture ideas can be screened rapidly. Do not frame results around
+peak AUC.
+
 Next phase after arm0 completed (see [[arm0-training-recovery]]): test whether the
 pretrained sinogram stem transfers to a transformer. Spec:
 `~/SinogramKernels/EXPERIMENT_stem_transferability.md`. Code:
