@@ -51,6 +51,17 @@ from torch.utils.data import DataLoader
 import twin_common as tc
 from train_twin import soc_temp, pos_weight, evaluate
 
+
+def macro_auc(P, T):
+    """Same per-class macro AUC as train_twin.evaluate, for train-side preds."""
+    try:
+        from sklearn.metrics import roc_auc_score
+    except ImportError:
+        return float("nan")
+    aucs = [roc_auc_score(T[:, c], P[:, c]) for c in range(T.shape[1])
+            if T[:, c].min() != T[:, c].max()]
+    return float(np.mean(aucs)) if aucs else float("nan")
+
 # arm0's exact architecture flags (run_arm0.sh); the stem checkpoint is loaded
 # through a full AnisoStemNet with strict=True so a config drift fails loudly
 # instead of silently training a different model.
@@ -317,11 +328,15 @@ def main():
             model.stem.eval()      # freeze BN running stats too, not just weights
         t0 = time.time()
         run = 0.0
+        trP, trT = [], []   # train-side preds/targets for the memorization gap
         for bi, (x, y) in enumerate(dl_tr):
             x, y = x.to(dev, non_blocking=True), y.to(dev, non_blocking=True)
             opt.zero_grad(set_to_none=True)
             with torch.amp.autocast("cuda"):
-                loss = crit(model(x), y)
+                logit = model(x)
+                loss = crit(logit, y)
+            trP.append(torch.sigmoid(logit.detach()).float().cpu().numpy())
+            trT.append(y.cpu().numpy())
             scaler.scale(loss).backward()
             if args.grad_clip > 0:
                 scaler.unscale_(opt)
@@ -330,21 +345,36 @@ def main():
             scaler.update()
             run += loss.item()
         sched.step()
-        auc, _, _ = evaluate(model, dl_va, dev)
+        # Train macro-AUC from the predictions the loop already made. Caveat:
+        # the model evolves within the epoch, so this slightly UNDERSTATES the
+        # end-of-epoch train fit — fine for locating the train/val divergence.
+        tr_auc = macro_auc(np.concatenate(trP), np.concatenate(trT))
+        auc, P, T = evaluate(model, dl_va, dev)
+        # Val loss under the same pos-weighted BCE as training (from post-sigmoid
+        # probs; identical to BCEWithLogitsLoss(pos_weight=pw) mean reduction).
+        Pc = np.clip(P, 1e-7, 1.0 - 1e-7)
+        pw_np = pw.cpu().numpy()
+        val_loss = float((-(pw_np * T * np.log(Pc)
+                            + (1.0 - T) * np.log(1.0 - Pc))).mean())
         peak = (torch.cuda.max_memory_allocated() / 2**30) if dev == "cuda" else 0.0
+        reserved = (torch.cuda.max_memory_reserved() / 2**30) if dev == "cuda" else 0.0
         log(f"[{domain}] arm{args.arm} epoch {ep+1}/{args.epochs} "
-            f"loss={run/(bi+1):.4f} val_macroAUC={auc:.4f} "
+            f"loss={run/(bi+1):.4f} val_loss={val_loss:.4f} "
+            f"trainAUC={tr_auc:.4f} val_macroAUC={auc:.4f} "
             f"({time.time()-t0:.0f}s) stem_frozen={frozen} "
-            f"lr={opt.param_groups[0]['lr']:.2e} cuda_peak={peak:.2f}GB")
+            f"lr={opt.param_groups[0]['lr']:.2e} "
+            f"cuda_peak={peak:.2f}GB reserved={reserved:.2f}GB")
         if dev == "cuda":
             torch.cuda.reset_peak_memory_stats()
         newbest = (not np.isnan(auc)) and auc > best
         if newbest:
             best = auc
         hist.append({"epoch": ep + 1, "loss": run / (bi + 1),
+                     "val_loss": val_loss, "train_macro_auc": tr_auc,
                      "val_macro_auc": auc, "best_so_far": best,
                      "secs": time.time() - t0, "stem_frozen": frozen,
-                     "lr": opt.param_groups[0]["lr"], "cuda_peak_gb": peak})
+                     "lr": opt.param_groups[0]["lr"], "cuda_peak_gb": peak,
+                     "cuda_reserved_gb": reserved})
         with open(histpath, "w") as f:
             json.dump(hist, f, indent=1)
         save(lastp, ep + 1, auc)

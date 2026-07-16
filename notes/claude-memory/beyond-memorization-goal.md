@@ -40,6 +40,15 @@ tier 2 multi-seed winners → tier 3 recon-decoder). Design not frozen; not comm
 - Data lever: subset_dc uses only 36,674 of 263,486 local slices; slices/patient
   cap can be raised (with z-gap) without adding patients.
 
+**Target-hardware constraints (user, 2026-07-15):** ich-maxvit (maxvit_base,
+118.7M) fit only bs=1 on the RTX 4090 vs bs≈26 on the Spark — fixed CUDA
+overhead (context + optimizer moments + workspaces) eats a 24 GB card
+disproportionately; expect less headroom than parameter-count math suggests.
+Measured for the current 34M graft at bs 128: 8.9 GB allocated / 12.0 GB
+reserved (fragmentation creeps; try expandable_segments). 4090 testing is
+blocked in summer by apartment heat (upper 80s F); `nvidia-smi -pl 250` works
+on the 4090 (unlike GB10) and roughly halves heat for ~10-15% speed.
+
 **How to apply:** when the user returns to this, offer to draft
 `EXPERIMENT_beyond_memorization.md` consolidating these levers into a controlled
 design (the arms' history.json files give per-epoch curves to define
