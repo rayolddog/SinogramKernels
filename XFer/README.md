@@ -14,9 +14,12 @@ measurements? Target: SIIM-CAIMI 2026 abstract, **deadline 2026-07-24**.
 - `PLAN.md` — the ordered work plan, design decisions, and the **compatibility
   findings you must act on** (the checkpoints are `AnisoStemNet`, not the
   `model.py` stub `motion_experiment.py` was drafted against). **Read this first.**
-- `motion_experiment.py` — cohort / motion-injection / QC / inference / stats.
-  `cohort`, `inject`, `qc`, `stats` are model-agnostic and ready. `infer` targets
-  the wrong model class and **must be swapped** per PLAN.md §"Checkpoint reality".
+- `motion_experiment.py` — cohort / motion-injection / QC / stats (all ready).
+  Its own `infer` targets the local `model.py` stub; **use `infer_twin.py`
+  instead** for the real checkpoints.
+- `infer_twin.py` — the production adapter (AnisoStemNet etc.). Self-configuring
+  from each `best.pt` (reads mean/std/arch, auto-loads `whiten.npy`); writes the
+  `results.csv` that `motion_experiment.py stats` consumes. Round-trip self-tested.
 - `memory_sinogram_kernel_experiment.md` — snapshot of the project memory
   (the SIIM push + the degraded-image-detector spinoff are at the bottom).
 
@@ -24,7 +27,10 @@ measurements? Target: SIIM-CAIMI 2026 abstract, **deadline 2026-07-24**.
 On the machine that has the checkpoints and tensors:
 ```
 git pull
-# follow PLAN.md; work OUTSIDE XFer/ (copy files up to the repo root as needed)
+cp XFer/motion_experiment.py XFer/infer_twin.py .   # up to repo root, next to
+                                                    # twin_common.py / data_pipeline.py
+python infer_twin.py -h                              # sanity: no ImportError
+# then follow PLAN.md
 ```
 Push back anything worth keeping (the cohort CSV, stats.md, the QC figure) so the
 laptop can pick it up for the abstract text.

@@ -61,12 +61,23 @@ different.** From `twin_common.py` / `train_twin.py` in this repo:
   `/mnt/mlcache/subset50k`), layout `CACHE/{recon,sinogram}/ID.npy`. The `inject`
   step reads clean **sinogram** tensors from there.
 
-**Cleanest fix (recommended):** write `infer_twin.py` that imports `twin_common`,
-builds `AnisoStemNet` with the confirmed `stem_spec`, loads `ck["model"]`,
-normalizes exactly as `DomainDS` does (pinned mean/std [+ whitening]), and reads
-the motion arms `motion_arms/{sino,recon}_s{P}/ID.npy`. Reuse
-`motion_experiment.stats` unchanged on its output. Keep `cohort`/`inject`/`qc`/
-`stats` from `motion_experiment.py` as-is — they don't touch the model.
+**FIXED — use `XFer/infer_twin.py` (written + self-tested 2026-07-22).** It does
+all of the above and is *self-configuring*: `train_twin.save()` stamps each
+`best.pt` with `mean`, `std`, and `arch`, so the adapter rebuilds the right
+architecture (aniso / iso / aniso2 / aniso3 / smallcnn / seresnext50), loads
+`ck["model"]`, standardizes with the checkpoint's own mean/std, and auto-loads
+`whiten.npy` if it sits beside the checkpoint (matching `train_twin.evaluate()`
+exactly). You do NOT have to hunt logs for mean/std. It writes the same
+`results.csv` schema `motion_experiment.py stats` consumes. Keep
+`cohort`/`inject`/`qc`/`stats` from `motion_experiment.py` as-is.
+
+Self-test coverage (round-tripped on this laptop, torch 2.11): every arch builds
+and loads its own `state_dict` cleanly; a wrong-arch load raises (so a bad
+`stem_spec` guess fails loudly, not silently); whitening applies; `infer_arm`
+returns valid probabilities. The ONE thing untested here is a *real production
+checkpoint* — if any arm used `arch='aniso_cfg'` (ablation toggles not saved),
+`load_state_dict` will raise a shape mismatch and you'll pass the exact
+stem/strides/dilations; plain `aniso` twins load with no fuss.
 
 ## Cohort / the "test group"
 - **One slice per patient** (the "uncorrelated set"): `cohort` dedups by PatientID
@@ -87,7 +98,11 @@ the motion arms `motion_arms/{sino,recon}_s{P}/ID.npy`. Reuse
 2. Confirm the held-out cohort (see above) — the one real showstopper.
 3. `cohort` → `inject 0,2,4,8` → `qc` (eyeball the 4-panel: motion visible in the
    sinogram band, streaks in the recon).
-4. `infer_twin.py` (the adapter) → `stats`.
+4. `infer_twin.py --ckpt-recon .../recon/best.pt --ckpt-sino .../sinogram/best.pt`
+   → `motion_experiment.py stats`. (Copy `motion_experiment.py` + `infer_twin.py`
+   from `XFer/` up to the repo root first, so they import `twin_common` and
+   `data_pipeline` — sanity: `python infer_twin.py -h` should print without an
+   ImportError.)
 5. Read the ddAUC table; write the abstract. Figures: the QC 4-panel + the
    per-domain degradation curve.
 
